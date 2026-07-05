@@ -86,3 +86,26 @@ func GetTaskByID(ID int) (models.Task, error) {
 	}
 	return task, nil
 }
+
+func UpdateTask(task models.Task) error {
+	query := `UPDATE tasks 
+	SET
+    Title = ?,
+    Description = ?,
+    Status = ?,
+    Priority = ?`
+
+	result, err := DB.Exec(query, task.Title, task.Description, task.Status, task.Priority, task.ID)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("task with id: %d not found", task.ID)
+	}
+	return nil
+}

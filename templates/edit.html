@@ -1,0 +1,27 @@
+{{define "title"}}Edit Page{{end}}
+
+{{define "content"}}
+<h1>Edit Task</h1>
+<form action="/tasks" method="POST">
+    <label for="title">Task Title</label><br>
+    <input type="text" name="title" id="title" placeholder="Enter task title..."   value="{{.Task.Title}}" required><br>
+    <label for="description">Task Description</label><br>
+    <textarea name="description" id="description" placeholder="Describe the task...">{{.Task.Description}}</textarea><br>
+    <label for="status">Task Status</label><br>
+    <select name="status" id="status" value="{{.Task.Status}}">
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Completed">Completed</option>
+        <option value="Cancelled">Cancelled</option>
+    </select>
+    <br>
+    <label for="priority">Task Priority</label><br>
+    <select name="priority" id="priority" value="{{.Task.Priority}}">
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+    </select>
+    <br><br>
+    <button type="submit">Edit Task</button>
+</form>
+{{end}}

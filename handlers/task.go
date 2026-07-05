@@ -98,3 +98,29 @@ func ShowTask(w http.ResponseWriter, r *http.Request) {
 	pageTask.Task = task
 	utils.RenderTemplate(w, "show.html", pageTask)
 }
+
+func EditTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/tasks/"), "/edit")
+	taskID, err := strconv.Atoi(path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	task, err := database.GetTaskByID(taskID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	pageTask := models.PageData{}
+	pageTask.Task = task
+	utils.RenderTemplate(w, "edit.html", pageTask)
+}
