@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"task-manager/models"
 
@@ -35,4 +36,53 @@ func CreateTask(task models.Task) error {
 		task.Priority,
 	)
 	return err
+}
+
+func GetAllTasks() ([]models.Task, error) {
+	allTasks := []models.Task{}
+	query := ` SELECT ID, Title, Description, Status, Priority FROM tasks`
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var task models.Task
+		err := rows.Scan(
+			&task.ID,
+			&task.Title,
+			&task.Description,
+			&task.Status,
+			&task.Priority,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+		allTasks = append(allTasks, task)
+	}
+
+	return allTasks, nil
+}
+
+func GetTaskByID(ID int) (models.Task, error) {
+	query := `SELECT ID, Title, Description, Status, Priority, CreatedAt FROM tasks
+	WHERE id = ?`
+	var task models.Task
+	row := DB.QueryRow(query, ID)
+	err := row.Scan(
+		&task.ID,
+		&task.Title,
+		&task.Description,
+		&task.Status,
+		&task.Priority,
+		&task.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return models.Task{}, err
+	}
+	if err != nil {
+		return models.Task{}, fmt.Errorf("tasks with id not found")
+	}
+	return task, nil
 }

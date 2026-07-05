@@ -8,13 +8,6 @@ import (
 	"task-manager/handlers"
 )
 
-var validStatus = map[string]bool{
-	"Pending":     true,
-	"In Progress": true,
-	"Completed":   true,
-	"Cancelled":   true,
-}
-
 func main() {
 	database.Init()
 	defer database.DB.Close()
@@ -34,5 +27,8 @@ func main() {
 	}
 	fmt.Println("server is running on port: http://localhost:8085")
 	http.HandleFunc("/tasks/new", handlers.ShowCreateTask)
+	http.HandleFunc("/tasks", handlers.CreateTask)
+	http.HandleFunc("/task", handlers.ListTasks)
+	http.HandleFunc("/tasks/", handlers.ShowTask)
 	http.ListenAndServe(":8085", nil)
 }

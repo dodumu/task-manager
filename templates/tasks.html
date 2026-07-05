@@ -1,0 +1,26 @@
+{{define "title"}}All Tasks{{end}}
+
+{{define "content"}}
+<h1>Total Task List</h1>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Priority</th>
+        
+    </tr>
+
+    {{range .Tasks}}
+    <tr>
+        <td>{{.ID}}</td>
+        <td><a href="/tasks/{{.ID}}">{{.Title}}</a></td>
+        <td>{{.Status}}</td>
+        <td>{{.Priority}}</td>
+        
+    </tr>
+
+    {{end}}
+</table>
+{{end}}
