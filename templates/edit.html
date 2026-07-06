@@ -2,24 +2,54 @@
 
 {{define "content"}}
 <h1>Edit Task</h1>
-<form action="/tasks" method="POST">
+<form action="/tasks/{{.Task.ID}}/edit" method="POST">
     <label for="title">Task Title</label><br>
     <input type="text" name="title" id="title" placeholder="Enter task title..."   value="{{.Task.Title}}" required><br>
     <label for="description">Task Description</label><br>
     <textarea name="description" id="description" placeholder="Describe the task...">{{.Task.Description}}</textarea><br>
     <label for="status">Task Status</label><br>
-    <select name="status" id="status" value="{{.Task.Status}}">
-        <option value="Pending">Pending</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Completed">Completed</option>
-        <option value="Cancelled">Cancelled</option>
+    <select id="status" name="status">
+        <option value="Pending"
+            {{if eq .Task.Status "Pending"}}selected{{end}}>
+            Pending
+        </option>
+
+        <option value="In Progress"
+            {{if eq .Task.Status "In Progress"}}selected{{end}}>
+            In Progress
+        </option>
+
+        <option value="Completed"
+            {{if eq .Task.Status "Completed"}}selected{{end}}>
+            Completed
+        </option>
+
+        <option value="Cancelled"
+            {{if eq .Task.Status "Cancelled"}}selected{{end}}>
+            Cancelled
+        </option>
     </select>
-    <br>
+
+    <br><br>
+
     <label for="priority">Task Priority</label><br>
-    <select name="priority" id="priority" value="{{.Task.Priority}}">
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+    <select id="priority" name="priority">
+
+        <option value="High"
+            {{if eq .Task.Priority "High"}}selected{{end}}>
+            High
+        </option>
+
+        <option value="Medium"
+            {{if eq .Task.Priority "Medium"}}selected{{end}}>
+            Medium
+        </option>
+
+        <option value="Low"
+            {{if eq .Task.Priority "Low"}}selected{{end}}>
+            Low
+        </option>
+
     </select>
     <br><br>
     <button type="submit">Edit Task</button>

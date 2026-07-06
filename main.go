@@ -29,6 +29,7 @@ func main() {
 	http.HandleFunc("/tasks/new", handlers.ShowCreateTask)
 	http.HandleFunc("/tasks", handlers.CreateTask)
 	http.HandleFunc("/task", handlers.ListTasks)
-	http.HandleFunc("/tasks/", handlers.ShowTask)
+	http.HandleFunc("/tasks/", handlers.TaskHandler)
+
 	http.ListenAndServe(":8085", nil)
 }

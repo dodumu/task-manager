@@ -93,7 +93,8 @@ func UpdateTask(task models.Task) error {
     Title = ?,
     Description = ?,
     Status = ?,
-    Priority = ?`
+    Priority = ?
+	WHERE id = ?`
 
 	result, err := DB.Exec(query, task.Title, task.Description, task.Status, task.Priority, task.ID)
 	if err != nil {
@@ -106,6 +107,24 @@ func UpdateTask(task models.Task) error {
 
 	if rows == 0 {
 		return fmt.Errorf("task with id: %d not found", task.ID)
+	}
+	return nil
+}
+
+func DeleteTask(id int) error {
+	query := `DELETE FROM tasks
+	WHERE id = ?`
+
+	result, err := DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	row, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if row == 0 {
+		return fmt.Errorf("task with id: %d not found", id)
 	}
 	return nil
 }

@@ -100,27 +100,99 @@ func ShowTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditTask(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/tasks/"), "/edit")
 	taskID, err := strconv.Atoi(path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	task, err := database.GetTaskByID(taskID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Task not found", http.StatusNotFound)
+	switch r.Method {
+	case http.MethodGet:
+
+		task, err := database.GetTaskByID(taskID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Task not found", http.StatusNotFound)
+				return
+			}
+			log.Println(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-		log.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		pageTask := models.PageData{}
+		pageTask.Task = task
+		utils.RenderTemplate(w, "edit.html", pageTask)
+	case http.MethodPost:
+
+		title := r.FormValue("title")
+		if title == "" {
+			http.Error(w, "title cannot be empty", http.StatusBadRequest)
+			return
+		}
+		description := r.FormValue("description")
+		status := r.FormValue("status")
+		priority := r.FormValue("priority")
+
+		ok := models.ValidStatus[status]
+		if !ok {
+			http.Error(w, "invalid status selected", http.StatusBadRequest)
+			return
+		}
+		ok = models.ValidPriority[priority]
+		if !ok {
+			http.Error(w, "invalid priiority selected", http.StatusBadRequest)
+			return
+		}
+		task := models.Task{
+			ID:          taskID,
+			Title:       title,
+			Status:      status,
+			Description: description,
+			Priority:    priority,
+		}
+
+		err = database.UpdateTask(task)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		http.Redirect(w, r, "/tasks/"+path, http.StatusSeeOther)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+}
+
+func RemoveTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	pageTask := models.PageData{}
-	pageTask.Task = task
-	utils.RenderTemplate(w, "edit.html", pageTask)
+
+	path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/tasks/"), "/delete")
+	taskID, err := strconv.Atoi(path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = database.DeleteTask(taskID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	http.Redirect(w, r, "/task", http.StatusSeeOther)
+}
+
+func TaskHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch {
+
+	case strings.HasSuffix(r.URL.Path, "/edit"):
+		EditTask(w, r)
+	case strings.HasSuffix(r.URL.Path, "/delete"):
+		RemoveTask(w, r)
+	default:
+		ShowTask(w, r)
+	}
 }

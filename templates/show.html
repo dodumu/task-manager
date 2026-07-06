@@ -32,6 +32,8 @@
 
 <a href="/tasks/{{.Task.ID}}/edit">Edit</a>
 
-<a href="/tasks/{{.Task.ID}}/delete">Delete</a>
+<form action="/tasks/{{.Task.ID}}/delete" method="POST">
+    <button type="submit">Delete</button>
+</form>
 
 {{end}}
