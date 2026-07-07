@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -195,4 +196,64 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		ShowTask(w, r)
 	}
+}
+
+func ListTasksAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	tasks, err := database.GetAllTasks()
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(tasks)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func RecieveAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var task models.Task
+
+	err := json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if task.Title == "" {
+		http.Error(w, "title cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if !models.ValidStatus[task.Status] {
+		http.Error(w, "invalid status", http.StatusBadRequest)
+		return
+	}
+
+	if !models.ValidPriority[task.Priority] {
+		http.Error(w, "invalid priority", http.StatusBadRequest)
+		return
+	}
+	err = database.CreateTask(task)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Task Created"))
 }

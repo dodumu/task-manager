@@ -28,19 +28,24 @@ func CreateTask(task models.Task) error {
 	query := `INSERT INTO tasks(Title, Description, Status, Priority)
 	VALUES(?, ?, ?, ?)`
 
-	_, err := DB.Exec(
+	result, err := DB.Exec(
 		query,
 		task.Title,
 		task.Description,
 		task.Status,
 		task.Priority,
 	)
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	task.ID = int(id)
 	return err
 }
 
 func GetAllTasks() ([]models.Task, error) {
 	allTasks := []models.Task{}
-	query := ` SELECT ID, Title, Description, Status, Priority FROM tasks`
+	query := ` SELECT * FROM tasks`
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -54,6 +59,7 @@ func GetAllTasks() ([]models.Task, error) {
 			&task.Description,
 			&task.Status,
 			&task.Priority,
+			&task.CreatedAt,
 		)
 
 		if err != nil {
