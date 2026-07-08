@@ -24,7 +24,7 @@ func Init() {
 	}
 }
 
-func CreateTask(task models.Task) error {
+func CreateTask(task models.Task) (models.Task, error) {
 	query := `INSERT INTO tasks(Title, Description, Status, Priority)
 	VALUES(?, ?, ?, ?)`
 
@@ -35,12 +35,15 @@ func CreateTask(task models.Task) error {
 		task.Status,
 		task.Priority,
 	)
+	if err != nil {
+		return models.Task{}, err
+	}
 	id, err := result.LastInsertId()
 	if err != nil {
-		return err
+		return models.Task{}, err
 	}
 	task.ID = int(id)
-	return err
+	return GetTaskByID(int(id)), nil
 }
 
 func GetAllTasks() ([]models.Task, error) {

@@ -47,7 +47,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		Status:      status,
 		Priority:    priority,
 	}
-	err := database.CreateTask(task)
+	_, err := database.CreateTask(task)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -247,13 +247,16 @@ func RecieveAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid priority", http.StatusBadRequest)
 		return
 	}
-	err = database.CreateTask(task)
+	createdTask, err := database.CreateTask(task)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Task Created"))
+	err = json.NewEncoder(w).Encode(createdTask)
+	if err != nil {
+		log.Println(err)
+	}
 }
