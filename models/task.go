@@ -13,6 +13,13 @@ type PageData struct {
 	Tasks []Task
 	Task  Task
 }
+type ErrorPage struct {
+	Error string
+}
+
+type SuccessMessage struct {
+	Message string
+}
 
 var ValidStatus = map[string]bool{
 	"Pending":     true,

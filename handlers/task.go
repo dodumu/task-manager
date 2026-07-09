@@ -152,7 +152,7 @@ func EditTask(w http.ResponseWriter, r *http.Request) {
 			Priority:    priority,
 		}
 
-		err = database.UpdateTask(task)
+		_, err = database.UpdateTask(task)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
@@ -207,30 +207,22 @@ func ListTasksAPI(w http.ResponseWriter, r *http.Request) {
 	tasks, err := database.GetAllTasks()
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		utils.WriteJSON(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-
-	err = json.NewEncoder(w).Encode(tasks)
-	if err != nil {
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
+	utils.WriteJSON(w, http.StatusOK, tasks)
 }
 
 func RecieveAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var task models.Task
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		utils.WriteJSON(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if task.Title == "" {
@@ -253,10 +245,112 @@ func RecieveAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(createdTask)
-	if err != nil {
-		log.Println(err)
+	utils.WriteJSON(w, http.StatusCreated, createdTask)
+}
+
+func ShowTaskAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, models.ErrorPage{
+			Error: "method not allowed",
+		})
+		return
 	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/tasks/")
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "id not available",
+		})
+		return
+	}
+	target, err := database.GetTaskByID(idNum)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusNotFound, models.ErrorPage{
+			Error: "task with id not found",
+		})
+	}
+	utils.WriteJSON(w, http.StatusOK, target)
+}
+
+func UpdateTaskAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, models.ErrorPage{
+			Error: "method not accepted",
+		})
+		return
+	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/tasks/")
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "bad request detected",
+		})
+		return
+	}
+	var task models.Task
+	err = json.NewDecoder(r.Body).Decode(&task)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "bad request detected",
+		})
+		return
+	}
+	task.ID = idNum
+
+	if strings.TrimSpace(task.Title) == "" {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "name cannot be empty",
+		})
+		return
+	}
+
+	ok := models.ValidStatus[task.Status]
+	if !ok {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "invalid status",
+		})
+		return
+	}
+	ok = models.ValidPriority[task.Priority]
+	if !ok {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "invalid priority",
+		})
+		return
+	}
+	updatedTask, err := database.UpdateTask(task)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, models.ErrorPage{
+			Error: "internal server error",
+		})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, updatedTask)
+}
+
+func DeleteTaskAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, models.ErrorPage{
+			Error: "method not allowed",
+		})
+		return
+	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/tasks/")
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, models.ErrorPage{
+			Error: "bad request detected",
+		})
+		return
+	}
+	err = database.DeleteTask(idNum)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusNotFound, models.ErrorPage{
+			Error: "task with id not found",
+		})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, models.SuccessMessage{
+		Message: "Task deleted successfully",
+	})
 }

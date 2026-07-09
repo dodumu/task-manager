@@ -43,7 +43,7 @@ func CreateTask(task models.Task) (models.Task, error) {
 		return models.Task{}, err
 	}
 	task.ID = int(id)
-	return GetTaskByID(int(id)), nil
+	return GetTaskByID(int(id))
 }
 
 func GetAllTasks() ([]models.Task, error) {
@@ -96,7 +96,7 @@ func GetTaskByID(ID int) (models.Task, error) {
 	return task, nil
 }
 
-func UpdateTask(task models.Task) error {
+func UpdateTask(task models.Task) (models.Task, error) {
 	query := `UPDATE tasks 
 	SET
     Title = ?,
@@ -107,17 +107,20 @@ func UpdateTask(task models.Task) error {
 
 	result, err := DB.Exec(query, task.Title, task.Description, task.Status, task.Priority, task.ID)
 	if err != nil {
-		return err
+		return models.Task{}, err
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return models.Task{}, err
 	}
-
+	id, err := result.LastInsertId()
+	if err != nil {
+		return models.Task{}, err
+	}
 	if rows == 0 {
-		return fmt.Errorf("task with id: %d not found", task.ID)
+		return models.Task{}, fmt.Errorf("task with id: %d not found", task.ID)
 	}
-	return nil
+	return GetTaskByID(int(id))
 }
 
 func DeleteTask(id int) error {
