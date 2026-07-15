@@ -204,8 +204,11 @@ func ListTasksAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks, err := database.GetAllTasks()
+	status := r.URL.Query().Get("status")
+	priority := r.URL.Query().Get("priority")
 
+
+	tasks, err := database.GetFilteredTasks(status, priority)
 	if err != nil {
 		utils.WriteJSON(w, http.StatusInternalServerError, "internal server error")
 		return
