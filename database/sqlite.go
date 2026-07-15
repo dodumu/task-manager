@@ -48,7 +48,7 @@ func CreateTask(task models.Task) (models.Task, error) {
 
 func GetAllTasks() ([]models.Task, error) {
 	allTasks := []models.Task{}
-	query := ` SELECT * FROM tasks`
+	query := ` SELECT * FROM tasks `
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -139,4 +139,57 @@ func DeleteTask(id int) error {
 		return fmt.Errorf("task with id: %d not found", id)
 	}
 	return nil
+}
+ 
+
+func GetFilteredTasks(status, priority string) ([]models.Task, error) {
+	query := `
+	SELECT ID, Title, Description, Status, Priority, CreatedAt
+	FROM tasks
+	WHERE 1=1
+	`
+
+	args := []any{}
+
+	if status != "" {
+		query += " AND Status = ?"
+		args = append(args, status)
+	}
+
+	if priority != "" {
+		query += " AND Priority = ?"
+		args = append(args, priority)
+	}
+
+	rows, err := DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tasks []models.Task
+
+	for rows.Next() {
+		var task models.Task
+
+		err := rows.Scan(
+			&task.ID,
+			&task.Title,
+			&task.Description,
+			&task.Status,
+			&task.Priority,
+			&task.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
