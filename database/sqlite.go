@@ -140,9 +140,8 @@ func DeleteTask(id int) error {
 	}
 	return nil
 }
- 
 
-func GetFilteredTasks(status, priority string) ([]models.Task, error) {
+func GetFilteredTasks(status, priority, search string, page, limit int) ([]models.Task, error) {
 	query := `
 	SELECT ID, Title, Description, Status, Priority, CreatedAt
 	FROM tasks
@@ -155,12 +154,18 @@ func GetFilteredTasks(status, priority string) ([]models.Task, error) {
 		query += " AND Status = ?"
 		args = append(args, status)
 	}
-
+	if search != "" {
+		query += " AND Title LIKE ?"
+		args = append(args, "%"+search+"%")
+	}
 	if priority != "" {
 		query += " AND Priority = ?"
 		args = append(args, priority)
 	}
-
+	if page != 0 && limit != 0 {
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, limit, (page-1)*limit)
+	}
 	rows, err := DB.Query(query, args...)
 	if err != nil {
 		return nil, err
